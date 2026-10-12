@@ -29,7 +29,8 @@ export const SearchView = () => {
     isLosslessMode,
     toggleLosslessMode,
     searchFilter,
-    setSearchFilter
+    setSearchFilter,
+    userRegion
   } = usePlayer();
 
   const displayedTracks = useMemo(() => {
@@ -234,6 +235,27 @@ export const SearchView = () => {
       ) : (
         /* Default Browse Section with Real-Time Full-Length Trending Songs + Genres */
         <div className="search-default-browse">
+          {/* Regional Trending Search Chips */}
+          <div className="search-regional-chips-container">
+            <div className="search-regional-header">
+              <span className="regional-chip-lead">
+                Trending in {userRegion?.countryName || 'India'} {userRegion?.flag || '????'}:
+              </span>
+            </div>
+            <div className="search-regional-chips-list">
+              {(userRegion?.searchChips || ['Arijit Singh', 'Diljit Dosanjh', 'Karan Aujla', 'Shreya Ghoshal', 'Anirudh']).map((chip, i) => (
+                <button 
+                  key={i} 
+                  className="search-quick-chip-btn"
+                  onClick={() => setSearchQuery(chip)}
+                  title={`Search ${chip}`}
+                >
+                  <SearchIcon size={12} style={{ marginRight: '4px' }} />
+                  {chip}
+                </button>
+              ))}
+            </div>
+          </div>
           {/* Real-time Global Trending Songs (Full Length) */}
           {trendingTracks && trendingTracks.length > 0 && (
             <div className="trending-section">

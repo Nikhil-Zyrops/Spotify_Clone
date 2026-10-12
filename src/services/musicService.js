@@ -209,3 +209,177 @@ export const fetchTrendingTracks = async () => {
   }
   return [];
 };
+
+
+/**
+ * Regional metadata & search suggestions mapping based on detected country code
+ */
+export const REGION_METADATA = {
+  IN: {
+    countryCode: 'IN',
+    countryName: 'India',
+    flag: '????',
+    headline: 'Trending in India',
+    subtitle: 'Top hits streaming right now across Bollywood, Punjabi & Indipop',
+    searchChips: ['Arijit Singh', 'Diljit Dosanjh', 'Karan Aujla', 'Shreya Ghoshal', 'Anirudh', 'AP Dhillon'],
+    seedQueries: ['Arijit Singh', 'Diljit Dosanjh', 'Chaleya', 'Tauba Tauba', 'Illuminati']
+  },
+  US: {
+    countryCode: 'US',
+    countryName: 'United States',
+    flag: '????',
+    headline: 'Top Hits in the United States',
+    subtitle: 'Hottest songs streaming on the US Billboard Hot 100',
+    searchChips: ['Kendrick Lamar', 'Taylor Swift', 'Post Malone', 'Morgan Wallen', 'Billie Eilish', 'Sabrina Carpenter'],
+    seedQueries: ['Not Like Us', 'Espresso', 'Cruel Summer', 'I Had Some Help', 'Birds of a Feather']
+  },
+  GB: {
+    countryCode: 'GB',
+    countryName: 'United Kingdom',
+    flag: '????',
+    headline: 'Official UK Top Trending',
+    subtitle: 'The biggest tracks across the UK Official Singles Chart',
+    searchChips: ['Dua Lipa', 'Coldplay', 'Ed Sheeran', 'Sam Smith', 'Charli XCX', 'Artemas'],
+    seedQueries: ['Training Season', 'Houdini', 'Feelslikeimfallinginlove', 'i like the way you kiss me']
+  },
+  CA: {
+    countryCode: 'CA',
+    countryName: 'Canada',
+    flag: '????',
+    headline: 'Trending in Canada',
+    subtitle: 'Top Canadian & international streams',
+    searchChips: ['The Weeknd', 'Drake', 'Justin Bieber', 'Tate McRae', 'Shawn Mendes'],
+    seedQueries: ['Greedy Tate McRae', 'Starboy', 'One Dance', 'Stay Justin Bieber']
+  },
+  AU: {
+    countryCode: 'AU',
+    countryName: 'Australia',
+    flag: '????',
+    headline: 'Trending in Australia',
+    subtitle: 'ARIA top chart hits across Australia',
+    searchChips: ['Troye Sivan', 'The Kid LAROI', 'Tones and I', 'Dom Dolla', 'Royel Otis'],
+    seedQueries: ['Rush Troye Sivan', 'Stay The Kid LAROI', 'Rhyme Dust Dom Dolla']
+  },
+  DEFAULT: {
+    countryCode: 'GLOBAL',
+    countryName: 'Global',
+    flag: '??',
+    headline: 'Trending in Your Region',
+    subtitle: 'The hottest chart tracks streaming right now',
+    searchChips: ['The Weeknd', 'Taylor Swift', 'Sabrina Carpenter', 'Billie Eilish', 'Imagine Dragons'],
+    seedQueries: ['Starboy', 'Espresso', 'Believer', 'Cruel Summer', 'Blinding Lights']
+  }
+};
+
+/**
+ * Detects the user's public IP region via lightweight country.is API
+ */
+export const detectUserRegion = async () => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+    const res = await fetch('https://api.country.is/', { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.country) {
+        const code = data.country.toUpperCase();
+        return REGION_METADATA[code] || {
+          ...REGION_METADATA.DEFAULT,
+          countryCode: code,
+          countryName: code
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("GeoIP detection fallback triggered:", err);
+  }
+  return REGION_METADATA.IN; // Default to India or detected region
+};
+
+/**
+ * Fetches regional trending tracks based on country code
+ */
+export const fetchRegionalTrending = async (countryCode = 'IN') => {
+  const meta = REGION_METADATA[countryCode] || REGION_METADATA.DEFAULT;
+  const seed = meta.seedQueries[Math.floor(Math.random() * meta.seedQueries.length)];
+  try {
+    const hits = await searchLiveSongs(seed, 12);
+    if (hits && hits.length > 0) return hits;
+  } catch (err) {
+    console.warn("Regional trending error:", err);
+  }
+  return [];
+};
+
+/**
+ * Fetches International Trending tracks (Global Top 50 worldwide megahits)
+ */
+export const fetchInternationalTrending = async () => {
+  const intlSeeds = [
+    'Blinding Lights The Weeknd',
+    'Espresso Sabrina Carpenter',
+    'Birds of a Feather Billie Eilish',
+    'Cruel Summer Taylor Swift',
+    'Believer Imagine Dragons',
+    'Die With A Smile Bruno Mars'
+  ];
+  const query = intlSeeds[Math.floor(Math.random() * intlSeeds.length)];
+  try {
+    const hits = await searchLiveSongs(query, 12);
+    if (hits && hits.length > 0) return hits;
+  } catch (err) {
+    console.warn("International trending error:", err);
+  }
+  return [];
+};
+
+/**
+ * Generates personalized 'Made For You' recommendations matching the user's taste
+ * and similar songs to what the user listened to before.
+ */
+export const fetchMadeForYouRecommendations = async (recentTracks = [], likedTracks = [], currentTrack = null) => {
+  try {
+    // 1. Determine primary artist & genre context
+    let targetArtist = '';
+    let targetGenre = '';
+    let targetTitle = '';
+
+    if (currentTrack && currentTrack.artist) {
+      targetArtist = currentTrack.artist;
+      targetGenre = currentTrack.genre || 'Pop';
+      targetTitle = currentTrack.title;
+    } else if (recentTracks.length > 0 && recentTracks[0].track) {
+      targetArtist = recentTracks[0].track.artist;
+      targetGenre = recentTracks[0].track.genre || 'Pop';
+      targetTitle = recentTracks[0].track.title;
+    } else if (likedTracks.length > 0) {
+      targetArtist = likedTracks[0].artist;
+      targetGenre = likedTracks[0].genre || 'Pop';
+      targetTitle = likedTracks[0].title;
+    }
+
+    const searchQuery = targetArtist ? targetArtist : 'Top Hits';
+    const hits = await searchLiveSongs(searchQuery, 10);
+
+    if (hits && hits.length > 0) {
+      return hits.map(track => {
+        let reason = "Recommended for your taste";
+        if (targetArtist && track.artist.toLowerCase().includes(targetArtist.toLowerCase().split(' ')[0])) {
+          reason = `Because you listened to ${targetArtist}`;
+        } else if (targetTitle) {
+          reason = `Similar vibe to ${targetTitle}`;
+        } else if (targetGenre) {
+          reason = `Matches your ${targetGenre} taste`;
+        }
+        return {
+          ...track,
+          recommendationReason: reason
+        };
+      });
+    }
+  } catch (err) {
+    console.warn("Made for you recommendation error:", err);
+  }
+  return [];
+};

@@ -26,7 +26,8 @@ export const Navbar = () => {
     setSearchQuery,
     isSearching,
     isFriendsPanelOpen,
-    setIsFriendsPanelOpen
+    setIsFriendsPanelOpen,
+    userRegion
   } = usePlayer();
 
   const { currentUser, logout, switchAccount, accounts, getUserPlaybackProgress } = useAuth();
@@ -90,7 +91,7 @@ export const Navbar = () => {
         )}
         <input 
           type="text" 
-          placeholder="Search real songs, artists, or albums (Lossless Audio)..." 
+          placeholder={`Search songs, artists (Trending in ${userRegion?.countryName || "India"} ${userRegion?.flag || "????"})...`} 
           value={searchQuery}
           onChange={handleSearchChange}
           onFocus={() => {

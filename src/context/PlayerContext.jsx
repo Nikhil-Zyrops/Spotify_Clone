@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { INITIAL_TRACKS, INITIAL_PLAYLISTS, INITIAL_FRIENDS_ACTIVITY, AVAILABLE_DEVICES } from '../data/mockData';
-import { searchLiveSongs, fetchTrendingTracks } from '../services/musicService';
+import { searchLiveSongs, fetchTrendingTracks, detectUserRegion, fetchRegionalTrending, fetchInternationalTrending, fetchMadeForYouRecommendations, REGION_METADATA } from '../services/musicService';
 import { useAuth } from './AuthContext';
 
 const PlayerContext = createContext(null);
@@ -75,6 +75,11 @@ export const PlayerProvider = ({ children }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [trendingTracks, setTrendingTracks] = useState([]);
   const [searchFilter, setSearchFilter] = useState('all');
+  // Regional, International & Made-For-You Recommendation States
+  const [userRegion, setUserRegion] = useState(REGION_METADATA.IN);
+  const [regionalTrending, setRegionalTrending] = useState([]);
+  const [internationalTrending, setInternationalTrending] = useState([]);
+  const [madeForYouTracks, setMadeForYouTracks] = useState([]);
 
   // Real-Time Simulator State
   const [liveListeners, setLiveListeners] = useState(14820);
@@ -135,6 +140,50 @@ export const PlayerProvider = ({ children }) => {
   useEffect(() => {
     setUserStorage('friends', friends);
   }, [friends, setUserStorage]);
+
+
+  // Initial Region & International Trending Loader
+  useEffect(() => {
+    let isMounted = true;
+    detectUserRegion().then(reg => {
+      if (!isMounted) return;
+      setUserRegion(reg);
+      fetchRegionalTrending(reg.countryCode).then(hits => {
+        if (isMounted && hits && hits.length > 0) {
+          setRegionalTrending(hits);
+        }
+      });
+    });
+
+    fetchInternationalTrending().then(hits => {
+      if (isMounted && hits && hits.length > 0) {
+        setInternationalTrending(hits);
+      }
+    });
+
+    return () => { isMounted = false; };
+  }, []);
+
+  // Live Recommendation Engine: Updates dynamically according to user taste & what they listen to
+  useEffect(() => {
+    let isMounted = true;
+    const historyKey = currentUser ? `spotify_clone_user_${currentUser.id}_history` : null;
+    let historyList = [];
+    try {
+      const saved = historyKey ? localStorage.getItem(historyKey) : null;
+      if (saved) historyList = JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+
+    fetchMadeForYouRecommendations(historyList, likedTracks, currentTrack).then(recs => {
+      if (isMounted && recs && recs.length > 0) {
+        setMadeForYouTracks(recs);
+      }
+    });
+
+    return () => { isMounted = false; };
+  }, [currentTrack, currentUser, likedTrackIds]);
 
   // Initial load: Fetch real-time global trending tracks
   useEffect(() => {
@@ -714,6 +763,10 @@ export const PlayerProvider = ({ children }) => {
         searchResults,
         isSearching,
         trendingTracks,
+        userRegion,
+        regionalTrending,
+        internationalTrending,
+        madeForYouTracks,
         searchFilter,
         setSearchFilter,
         liveListeners,
