@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -6,9 +6,14 @@ import {
   X, 
   Users, 
   Sparkles,
-  Loader2
+  Loader2,
+  LogOut,
+  UserCheck,
+  ChevronDown,
+  History
 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
+import { useAuth } from '../context/AuthContext';
 
 export const Navbar = () => {
   const { 
@@ -28,6 +33,22 @@ export const Navbar = () => {
     setIsSpotifyInfoOpen
   } = usePlayer();
 
+  const { currentUser, logout, switchAccount, accounts, getUserPlaybackProgress } = useAuth();
+
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchQuery(val);
@@ -39,6 +60,8 @@ export const Navbar = () => {
   const handleClearSearch = () => {
     setSearchQuery('');
   };
+
+  const savedPlayback = getUserPlaybackProgress();
 
   return (
     <header className="spotify-navbar">
@@ -89,7 +112,7 @@ export const Navbar = () => {
       {/* Real-time Status & Header Actions */}
       <div className="navbar-right-actions">
         {/* Real-Time Sync Indicator */}
-        <div className="live-sync-pill" title={`Real-time sync active • Last heartbeat ${liveSyncTime}`}>
+        <div className="live-sync-pill" title={`Real-time sync active ? Last heartbeat ${liveSyncTime}`}>
           <span className="live-pulse-dot"></span>
           <span className="live-sync-text">LIVE SYNC</span>
           <span className="live-listener-count">
@@ -116,15 +139,104 @@ export const Navbar = () => {
           <Users size={19} />
         </button>
 
-        {/* User Profile Pill */}
-        <div className="user-profile-pill" title="Nikhil (Zyrops Pro Account)">
-          <img 
-            src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" 
-            alt="Profile Avatar" 
-            className="user-profile-avatar"
-          />
-          <span className="user-profile-name">Nikhil</span>
-        </div>
+        {/* User Profile Pill & Dropdown */}
+        {currentUser ? (
+          <div className="user-profile-menu-container" ref={menuRef}>
+            <button 
+              className={`user-profile-pill ${isUserMenuOpen ? 'active' : ''}`}
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              title={`Logged in as ${currentUser.name} (${currentUser.email})`}
+            >
+              <img 
+                src={currentUser.avatar} 
+                alt={currentUser.name} 
+                className="user-profile-avatar"
+              />
+              <span className="user-profile-name">{currentUser.name}</span>
+              <ChevronDown size={14} className={`user-profile-arrow ${isUserMenuOpen ? 'open' : ''}`} />
+            </button>
+
+            {isUserMenuOpen && (
+              <div className="user-profile-dropdown">
+                {/* Account Summary */}
+                <div className="dropdown-account-header">
+                  <img src={currentUser.avatar} alt={currentUser.name} className="dropdown-user-avatar" />
+                  <div className="dropdown-user-details">
+                    <span className="dropdown-user-name">{currentUser.name}</span>
+                    <span className="dropdown-user-email">{currentUser.email}</span>
+                    <span className="dropdown-user-plan">{currentUser.plan || 'Spotify Premium'}</span>
+                  </div>
+                </div>
+
+                {/* Last Listening Progress */}
+                {savedPlayback && savedPlayback.track && (
+                  <div className="dropdown-playback-progress-box">
+                    <div className="dropdown-progress-label">
+                      <History size={12} color="#1db954" />
+                      <span>Last Listened Progress</span>
+                    </div>
+                    <div className="dropdown-progress-track">
+                      <img src={savedPlayback.track.coverUrl} alt="Cover" className="dropdown-progress-thumb" />
+                      <div className="dropdown-progress-meta">
+                        <span className="progress-track-name">{savedPlayback.track.title}</span>
+                        <span className="progress-track-time">
+                          Left off at {Math.floor(savedPlayback.currentTime / 60)}:{Math.floor(savedPlayback.currentTime % 60).toString().padStart(2, '0')} ({savedPlayback.percent}%)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="dropdown-divider"></div>
+
+                {/* Switch Account Quick List */}
+                <div className="dropdown-switch-section">
+                  <span className="dropdown-section-title">Switch Account (Multi-Session):</span>
+                  {accounts.map(acc => (
+                    <button
+                      key={acc.id}
+                      className={`dropdown-account-choice ${acc.id === currentUser.id ? 'current' : ''}`}
+                      onClick={() => {
+                        switchAccount(acc.id);
+                        setIsUserMenuOpen(false);
+                      }}
+                    >
+                      <img src={acc.avatar} alt={acc.name} className="choice-avatar" />
+                      <div className="choice-meta">
+                        <span className="choice-name">{acc.name}</span>
+                        <span className="choice-email">{acc.email}</span>
+                      </div>
+                      {acc.id === currentUser.id && (
+                        <UserCheck size={14} color="#1db954" className="choice-check" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="dropdown-divider"></div>
+
+                {/* Log Out Button */}
+                <button 
+                  className="dropdown-logout-btn"
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    logout();
+                  }}
+                >
+                  <LogOut size={15} />
+                  <span>Log out of Spotify</span>
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button 
+            className="navbar-login-btn"
+            onClick={() => logout()}
+          >
+            Log in
+          </button>
+        )}
       </div>
     </header>
   );

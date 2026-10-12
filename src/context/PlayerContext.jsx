@@ -1,41 +1,70 @@
-﻿import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { INITIAL_TRACKS, INITIAL_PLAYLISTS, INITIAL_FRIENDS_ACTIVITY, AVAILABLE_DEVICES } from '../data/mockData';
 import { searchLiveSongs, fetchTrendingTracks } from '../services/musicService';
+import { useAuth } from './AuthContext';
 
 const PlayerContext = createContext(null);
 
 export const PlayerProvider = ({ children }) => {
-  // Library State
+  const { 
+    currentUser, 
+    getUserStorage, 
+    setUserStorage, 
+    saveUserPlaybackProgress, 
+    getUserPlaybackProgress 
+  } = useAuth();
+
+  // Library State - Namespaced per user
   const [tracks, setTracks] = useState(INITIAL_TRACKS);
+  
   const [playlists, setPlaylists] = useState(() => {
-    try {
-      const saved = localStorage.getItem('spotify_clone_playlists');
-      return saved ? JSON.parse(saved) : INITIAL_PLAYLISTS;
-    } catch {
-      return INITIAL_PLAYLISTS;
-    }
+    return getUserStorage('playlists', INITIAL_PLAYLISTS);
   });
 
   const [likedTrackIds, setLikedTrackIds] = useState(() => {
-    try {
-      const saved = localStorage.getItem('spotify_clone_liked');
-      return saved ? JSON.parse(saved) : ['track-1', 'track-3'];
-    } catch {
-      return ['track-1', 'track-3'];
-    }
+    return getUserStorage('liked', ['track-1', 'track-3']);
   });
 
+  // User-partitioned friends state
+  const [friends, setFriends] = useState(() => {
+    return getUserStorage('friends', INITIAL_FRIENDS_ACTIVITY);
+  });
+
+  const [isAddFriendOpen, setIsAddFriendOpen] = useState(false);
+
   // Player State
-  const [currentTrack, setCurrentTrack] = useState(INITIAL_TRACKS[0]);
+  const [currentTrack, setCurrentTrack] = useState(() => {
+    const saved = getUserPlaybackProgress();
+    return (saved && saved.track) ? saved.track : INITIAL_TRACKS[0];
+  });
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(INITIAL_TRACKS[0].duration || 172);
+  const [currentTime, setCurrentTime] = useState(() => {
+    const saved = getUserPlaybackProgress();
+    return (saved && typeof saved.currentTime === 'number') ? saved.currentTime : 0;
+  });
+  const [duration, setDuration] = useState(() => {
+    const saved = getUserPlaybackProgress();
+    return (saved && saved.duration) ? saved.duration : (INITIAL_TRACKS[0].duration || 172);
+  });
   const [volume, setVolume] = useState(0.75);
   const [isMuted, setIsMuted] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState('off'); // 'off' | 'all' | 'one'
   const [queue, setQueue] = useState(INITIAL_TRACKS);
   const [queueIndex, setQueueIndex] = useState(0);
+
+  // Resume notification banner state
+  const [resumeNotice, setResumeNotice] = useState(() => {
+    const saved = getUserPlaybackProgress();
+    if (saved && saved.track && saved.currentTime > 5) {
+      return { track: saved.track, currentTime: saved.currentTime };
+    }
+    return null;
+  });
+
+  const clearResumeNotice = useCallback(() => {
+    setResumeNotice(null);
+  }, []);
 
   // Hi-Res Lossless Audio DSP Master Engine State
   const [isLosslessMode, setIsLosslessMode] = useState(true);
@@ -49,15 +78,6 @@ export const PlayerProvider = ({ children }) => {
 
   // Real-Time Simulator State
   const [liveListeners, setLiveListeners] = useState(14820);
-  const [friends, setFriends] = useState(() => {
-    try {
-      const saved = localStorage.getItem('spotify_clone_friends');
-      return saved ? JSON.parse(saved) : INITIAL_FRIENDS_ACTIVITY;
-    } catch {
-      return INITIAL_FRIENDS_ACTIVITY;
-    }
-  });
-  const [isAddFriendOpen, setIsAddFriendOpen] = useState(false);
   const [devices, setDevices] = useState(AVAILABLE_DEVICES);
   const [activeDevice, setActiveDevice] = useState(AVAILABLE_DEVICES[0]);
   const [liveSyncTime, setLiveSyncTime] = useState(() => new Date().toLocaleTimeString());
@@ -83,19 +103,38 @@ export const PlayerProvider = ({ children }) => {
   const synthIntervalRef = useRef(null);
   const searchDebounceRef = useRef(null);
   const playNextRef = useRef(null);
+  const lastSaveTimeRef = useRef(0);
 
-  // Sync to localStorage
+  // When currentUser changes (e.g. switch accounts or log in), re-load their isolated data!
   useEffect(() => {
-    localStorage.setItem('spotify_clone_playlists', JSON.stringify(playlists));
-  }, [playlists]);
+    if (!currentUser) return;
+    setPlaylists(getUserStorage('playlists', INITIAL_PLAYLISTS));
+    setLikedTrackIds(getUserStorage('liked', ['track-1', 'track-3']));
+    setFriends(getUserStorage('friends', INITIAL_FRIENDS_ACTIVITY));
+
+    const savedProgress = getUserPlaybackProgress();
+    if (savedProgress && savedProgress.track) {
+      setCurrentTrack(savedProgress.track);
+      setCurrentTime(savedProgress.currentTime || 0);
+      setDuration(savedProgress.duration || savedProgress.track.duration || 180);
+      if (savedProgress.currentTime > 5) {
+        setResumeNotice({ track: savedProgress.track, currentTime: savedProgress.currentTime });
+      }
+    }
+  }, [currentUser, getUserStorage, getUserPlaybackProgress]);
+
+  // Sync to User-Isolated storage
+  useEffect(() => {
+    setUserStorage('playlists', playlists);
+  }, [playlists, setUserStorage]);
 
   useEffect(() => {
-    localStorage.setItem('spotify_clone_liked', JSON.stringify(likedTrackIds));
-  }, [likedTrackIds]);
+    setUserStorage('liked', likedTrackIds);
+  }, [likedTrackIds, setUserStorage]);
 
   useEffect(() => {
-    localStorage.setItem('spotify_clone_friends', JSON.stringify(friends));
-  }, [friends]);
+    setUserStorage('friends', friends);
+  }, [friends, setUserStorage]);
 
   // Initial load: Fetch real-time global trending tracks
   useEffect(() => {
@@ -137,7 +176,7 @@ export const PlayerProvider = ({ children }) => {
     };
   }, [searchQuery]);
 
-  // Real-Time Simulated Spotify Sync Loop
+  // Real-Time Simulated & Peer Spotify Sync Loop
   useEffect(() => {
     const interval = setInterval(() => {
       setLiveListeners(prev => Math.max(12000, prev + Math.floor(Math.random() * 21) - 10));
@@ -252,7 +291,7 @@ export const PlayerProvider = ({ children }) => {
     playNextRef.current = playNext;
   }, [playNext]);
 
-  // Get current audio frequency data for visualizers
+  // Audio frequency data for visualizers
   const getFrequencyData = useCallback(() => {
     if (analyserRef.current && isPlaying) {
       const bufferLength = analyserRef.current.frequencyBinCount;
@@ -270,7 +309,7 @@ export const PlayerProvider = ({ children }) => {
     return new Uint8Array(32).fill(0);
   }, [isPlaying]);
 
-  // Audio Event Listeners
+  // Audio Event Listeners & Per-User Progress Tracking
   useEffect(() => {
     const audio = audioRef.current;
     audio.crossOrigin = "anonymous";
@@ -278,6 +317,13 @@ export const PlayerProvider = ({ children }) => {
 
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
+
+      // Periodically store progress for this user (every 2.5s)
+      const now = Date.now();
+      if (now - lastSaveTimeRef.current > 2500 && currentTrack) {
+        lastSaveTimeRef.current = now;
+        saveUserPlaybackProgress(currentTrack, audio.currentTime, audio.duration);
+      }
     };
 
     const handleLoadedMetadata = () => {
@@ -310,7 +356,7 @@ export const PlayerProvider = ({ children }) => {
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
-  }, [repeatMode]);
+  }, [repeatMode, currentTrack, saveUserPlaybackProgress]);
 
   // Apply volume changes
   useEffect(() => {
@@ -329,9 +375,10 @@ export const PlayerProvider = ({ children }) => {
       synthIntervalRef.current = null;
     }
 
-    audio.src = currentTrack.audioUrl;
+    if (audio.src !== currentTrack.audioUrl) {
+      audio.src = currentTrack.audioUrl;
+    }
     setDuration(currentTrack.duration || 180);
-    setCurrentTime(0);
 
     if (isPlaying) {
       setupWebAudio();
@@ -409,6 +456,8 @@ export const PlayerProvider = ({ children }) => {
     const audio = audioRef.current;
     audio.src = track.audioUrl;
     audio.play().catch(() => {});
+
+    saveUserPlaybackProgress(track, 0, track.duration || 180);
   };
 
   const togglePlayPause = () => {
@@ -418,6 +467,9 @@ export const PlayerProvider = ({ children }) => {
       audio.pause();
       if (synthIntervalRef.current) clearInterval(synthIntervalRef.current);
       setIsPlaying(false);
+      if (currentTrack) {
+        saveUserPlaybackProgress(currentTrack, audio.currentTime, audio.duration);
+      }
     } else {
       audio.play().catch(() => {});
       setIsPlaying(true);
@@ -442,6 +494,7 @@ export const PlayerProvider = ({ children }) => {
       const audio = audioRef.current;
       audio.src = prevTrack.audioUrl;
       audio.play().catch(() => {});
+      saveUserPlaybackProgress(prevTrack, 0, prevTrack.duration || 180);
     }
   };
 
@@ -450,6 +503,9 @@ export const PlayerProvider = ({ children }) => {
     if (audio && !isNaN(seconds)) {
       audio.currentTime = seconds;
       setCurrentTime(seconds);
+      if (currentTrack) {
+        saveUserPlaybackProgress(currentTrack, seconds, audio.duration);
+      }
     }
   };
 
@@ -489,7 +545,7 @@ export const PlayerProvider = ({ children }) => {
       title: name,
       description: description || "Created by you on Spotify Clone",
       coverUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80",
-      owner: "User",
+      owner: currentUser ? currentUser.name : "User",
       likes: "1",
       trackIds: [],
       accentColor: "#1db954"
@@ -536,7 +592,6 @@ export const PlayerProvider = ({ children }) => {
     }
   };
 
-
   // Add Real Friend helper
   const addFriend = useCallback((friendData) => {
     const newFriend = {
@@ -564,7 +619,7 @@ export const PlayerProvider = ({ children }) => {
         channel.close();
       }
     } catch {
-      // broadcast fallback
+      // fallback
     }
   }, []);
 
@@ -573,7 +628,7 @@ export const PlayerProvider = ({ children }) => {
     setFriends(prev => prev.filter(f => f.id !== friendId));
   }, []);
 
-  // Real-Time Peer Audio Feed via BroadcastChannel
+  // Real-Time Peer Audio Feed via BroadcastChannel (multi-user and multi-tab)
   useEffect(() => {
     if (typeof BroadcastChannel === 'undefined') return;
     const channel = new BroadcastChannel('spotify_clone_peer_network');
@@ -581,6 +636,9 @@ export const PlayerProvider = ({ children }) => {
     if (isPlaying && currentTrack) {
       channel.postMessage({
         type: 'PEER_PLAYBACK',
+        peerId: currentUser ? currentUser.id : 'anon',
+        peerName: currentUser ? currentUser.name : 'Friend (Live Tab)',
+        peerAvatar: currentUser ? currentUser.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80',
         track: currentTrack.title,
         artist: currentTrack.artist,
         album: currentTrack.album || currentTrack.title,
@@ -594,12 +652,16 @@ export const PlayerProvider = ({ children }) => {
     const handleMessage = (event) => {
       const data = event.data;
       if (data && data.type === 'PEER_PLAYBACK') {
+        // Do not mirror current user as their own friend
+        if (currentUser && data.peerId === currentUser.id) return;
+
         setFriends(prev => {
-          const peerIndex = prev.findIndex(f => f.id === 'peer-tab');
+          const peerId = data.peerId || 'peer-tab';
+          const peerIndex = prev.findIndex(f => f.id === peerId || f.name === data.peerName);
           const peerFriend = {
-            id: 'peer-tab',
-            name: 'Friend (Live Tab)',
-            avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80',
+            id: peerId,
+            name: data.peerName || 'Friend (Live Tab)',
+            avatar: data.peerAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80',
             track: data.track,
             artist: data.artist,
             album: data.album,
@@ -624,7 +686,7 @@ export const PlayerProvider = ({ children }) => {
       channel.removeEventListener('message', handleMessage);
       channel.close();
     };
-  }, [isPlaying, currentTrack, currentTime]);
+  }, [isPlaying, currentTrack, currentTime, currentUser]);
 
   const likedTracks = tracks.filter(t => likedTrackIds.includes(t.id));
 
@@ -657,10 +719,6 @@ export const PlayerProvider = ({ children }) => {
         liveListeners,
         friends,
         friendsActivity: friends,
-        isAddFriendOpen,
-        setIsAddFriendOpen,
-        addFriend,
-        removeFriend,
         devices,
         activeDevice,
         liveSyncTime,
@@ -674,6 +732,12 @@ export const PlayerProvider = ({ children }) => {
         setIsFriendsPanelOpen,
         isSpotifyInfoOpen,
         setIsSpotifyInfoOpen,
+        isAddFriendOpen,
+        setIsAddFriendOpen,
+        addFriend,
+        removeFriend,
+        resumeNotice,
+        clearResumeNotice,
         getFrequencyData,
         navigateTo,
         goBack,
@@ -709,4 +773,3 @@ export const usePlayer = () => {
   }
   return context;
 };
-

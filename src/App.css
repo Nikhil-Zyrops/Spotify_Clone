@@ -3915,3 +3915,712 @@
   line-height: 1.4;
   margin: 0;
 }
+
+
+/* ========================================================
+   AUTHENTICATION & LOGIN PAGE STYLES
+   ======================================================== */
+.spotify-auth-page {
+  min-height: 100vh;
+  width: 100vw;
+  background: radial-gradient(circle at 50% 10%, #1e3a24 0%, #121212 50%, #080808 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  box-sizing: border-box;
+}
+
+.spotify-auth-container {
+  width: 100%;
+  max-width: 520px;
+  background: rgba(18, 18, 18, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 36px 32px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+  animation: auth-fade-in 0.3s ease-out;
+}
+
+@keyframes auth-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.auth-brand-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.auth-logo-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 14px rgba(29, 185, 84, 0.45));
+}
+
+.auth-main-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 6px 0 0;
+  letter-spacing: -0.02em;
+}
+
+.auth-sub-title {
+  font-size: 0.85rem;
+  color: var(--spotify-subtext);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Quick Demo Accounts Switcher */
+.auth-demo-accounts-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(29, 185, 84, 0.25);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.demo-accounts-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--spotify-green);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.demo-accounts-desc {
+  font-size: 0.775rem;
+  color: var(--spotify-subtext);
+  margin: 0;
+}
+
+.demo-accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .demo-accounts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.demo-account-pill-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.demo-account-pill-btn:hover {
+  background: rgba(29, 185, 84, 0.15);
+  border-color: var(--spotify-green);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(29, 185, 84, 0.2);
+}
+
+.demo-pill-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.demo-pill-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.demo-pill-name {
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.demo-pill-email {
+  font-size: 0.65rem;
+  color: var(--spotify-subtext);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.auth-divider-row {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--spotify-text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 2px 0;
+}
+
+.auth-divider-row::before,
+.auth-divider-row::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auth-divider-row span {
+  padding: 0 12px;
+}
+
+/* Auth Tabs */
+.auth-tabs-bar {
+  display: flex;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 500px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.auth-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 500px;
+  background: transparent;
+  border: none;
+  color: var(--spotify-subtext);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-tab-btn.active {
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.auth-error-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.825rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-form-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.auth-input-field {
+  background: #242424;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  outline: none;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.auth-input-field:focus {
+  border-color: #ffffff;
+  background: #2a2a2a;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.auth-password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-input-field.password {
+  padding-right: 44px;
+}
+
+.auth-toggle-pwd-btn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: var(--spotify-subtext);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+}
+
+.auth-toggle-pwd-btn:hover {
+  color: #ffffff;
+}
+
+.auth-submit-btn {
+  background: var(--spotify-green);
+  color: #000000;
+  font-size: 1rem;
+  font-weight: 800;
+  padding: 14px 24px;
+  border-radius: 500px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 6px;
+  letter-spacing: 0.02em;
+}
+
+.auth-submit-btn:hover:not(:disabled) {
+  transform: scale(1.02);
+  background: #1ed760;
+  box-shadow: 0 4px 18px rgba(29, 185, 84, 0.4);
+}
+
+.auth-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auth-multiplatform-notice {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.multiplatform-notice-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--spotify-green);
+}
+
+.auth-multiplatform-notice p {
+  font-size: 0.725rem;
+  color: var(--spotify-text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.auth-footer-switch {
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 16px;
+}
+
+.auth-footer-switch p {
+  font-size: 0.85rem;
+  color: var(--spotify-subtext);
+  margin: 0;
+}
+
+.auth-link-text {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.auth-link-text:hover {
+  color: var(--spotify-green);
+}
+
+/* ========================================================
+   USER PROFILE NAVBAR DROPDOWN & SWITCHER
+   ======================================================== */
+.user-profile-menu-container {
+  position: relative;
+}
+
+.user-profile-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 3px 12px 3px 3px;
+  border-radius: 500px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.user-profile-pill:hover,
+.user-profile-pill.active {
+  background-color: #282828;
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: scale(1.02);
+}
+
+.user-profile-arrow {
+  color: var(--spotify-subtext);
+  transition: transform 0.2s ease;
+}
+
+.user-profile-arrow.open {
+  transform: rotate(180deg);
+}
+
+.user-profile-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  background: #282828;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 200;
+  animation: dropdown-pop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdown-pop {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-account-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+
+.dropdown-user-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--spotify-green);
+}
+
+.dropdown-user-details {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dropdown-user-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.dropdown-user-email {
+  font-size: 0.75rem;
+  color: var(--spotify-subtext);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-user-plan {
+  font-size: 0.6875rem;
+  color: var(--spotify-green);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Playback Progress in Dropdown */
+.dropdown-playback-progress-box {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dropdown-progress-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--spotify-subtext);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.dropdown-progress-track {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dropdown-progress-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.dropdown-progress-meta {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.progress-track-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.progress-track-time {
+  font-size: 0.7rem;
+  color: var(--spotify-green);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dropdown-switch-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dropdown-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--spotify-subtext);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dropdown-account-choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.dropdown-account-choice:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dropdown-account-choice.current {
+  background: rgba(29, 185, 84, 0.1);
+}
+
+.choice-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.choice-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.choice-name {
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.choice-email {
+  font-size: 0.675rem;
+  color: var(--spotify-subtext);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: #f87171;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.dropdown-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.navbar-login-btn {
+  background: #ffffff;
+  color: #000000;
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 8px 24px;
+  border-radius: 500px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.navbar-login-btn:hover {
+  transform: scale(1.05);
+  background: #f0f0f0;
+}
+
+/* ========================================================
+   RESUME PLAYBACK FLOATING NOTIFICATION TOAST
+   ======================================================== */
+.resume-playback-toast {
+  position: fixed;
+  bottom: 104px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 80;
+  background: rgba(18, 18, 18, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--spotify-green);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 16px rgba(29, 185, 84, 0.25);
+  border-radius: 500px;
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  animation: toast-slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: 90vw;
+}
+
+@keyframes toast-slide-up {
+  from { opacity: 0; transform: translate(-50%, 15px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.resume-toast-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: #ffffff;
+}
+
+.resume-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--spotify-green);
+  box-shadow: 0 0 8px var(--spotify-green);
+  animation: pulse-dot 1.5s infinite;
+}
+
+.resume-toast-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resume-toast-play-btn {
+  background: var(--spotify-green);
+  color: #000000;
+  border: none;
+  border-radius: 500px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.resume-toast-play-btn:hover {
+  background: #1ed760;
+  transform: scale(1.05);
+}
+
+.resume-toast-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--spotify-subtext);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.resume-toast-close-btn:hover {
+  color: #ffffff;
+}
