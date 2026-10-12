@@ -7,8 +7,6 @@ import {
   Heart, 
   Mic2, 
   ListMusic, 
-  HelpCircle, 
-  Sparkles,
 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
@@ -19,8 +17,7 @@ export const Sidebar = () => {
     navigateTo, 
     playlists, 
     createPlaylist, 
-    likedTrackIds, 
-    setIsSpotifyInfoOpen 
+    likedTrackIds
   } = usePlayer();
 
   const handleCreatePlaylist = () => {
@@ -105,7 +102,7 @@ export const Sidebar = () => {
           <div className="playlist-info">
             <span className="playlist-title">Liked Songs</span>
             <span className="playlist-subtitle">
-              📌 Playlist • {likedTrackIds.length} songs
+              Playlist ? ${likedTrackIds.length} songs
             </span>
           </div>
         </div>
@@ -129,24 +126,12 @@ export const Sidebar = () => {
                 <div className="playlist-info">
                   <span className="playlist-title">{playlist.title}</span>
                   <span className="playlist-subtitle">
-                    Playlist • {playlist.owner}
+                    Playlist ? ${playlist.owner}
                   </span>
                 </div>
               </div>
             );
           })}
-        </div>
-
-        {/* Architecture deep dive badge button */}
-        <div className="architecture-promo-box" onClick={() => setIsSpotifyInfoOpen(true)}>
-          <div className="promo-sparkle">
-            <Sparkles size={16} />
-          </div>
-          <div className="promo-content">
-            <div className="promo-title">How Spotify Works</div>
-            <div className="promo-subtitle">Architecture & Streaming Engine</div>
-          </div>
-          <HelpCircle size={16} className="promo-help-icon" />
         </div>
       </div>
     </aside>

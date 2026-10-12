@@ -5,7 +5,6 @@ import {
   Search, 
   X, 
   Users, 
-  Sparkles,
   Loader2,
   LogOut,
   UserCheck,
@@ -26,11 +25,8 @@ export const Navbar = () => {
     searchQuery, 
     setSearchQuery,
     isSearching,
-    liveListeners,
-    liveSyncTime,
     isFriendsPanelOpen,
-    setIsFriendsPanelOpen,
-    setIsSpotifyInfoOpen
+    setIsFriendsPanelOpen
   } = usePlayer();
 
   const { currentUser, logout, switchAccount, accounts, getUserPlaybackProgress } = useAuth();
@@ -109,27 +105,8 @@ export const Navbar = () => {
         )}
       </div>
 
-      {/* Real-time Status & Header Actions */}
+      {/* Header Actions */}
       <div className="navbar-right-actions">
-        {/* Real-Time Sync Indicator */}
-        <div className="live-sync-pill" title={`Real-time sync active ? Last heartbeat ${liveSyncTime}`}>
-          <span className="live-pulse-dot"></span>
-          <span className="live-sync-text">LIVE SYNC</span>
-          <span className="live-listener-count">
-            {liveListeners.toLocaleString()} listening
-          </span>
-        </div>
-
-        {/* Spotify Architecture Deep Dive Trigger */}
-        <button 
-          className="navbar-guide-btn"
-          onClick={() => setIsSpotifyInfoOpen(true)}
-          title="Learn how Spotify streaming architecture works"
-        >
-          <Sparkles size={16} />
-          <span>How Spotify Works</span>
-        </button>
-
         {/* Toggle Friends Activity Panel */}
         <button 
           className={`navbar-icon-btn ${isFriendsPanelOpen ? 'active' : ''}`}

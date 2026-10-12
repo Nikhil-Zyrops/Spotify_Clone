@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Play, 
   Pause, 
@@ -8,18 +8,18 @@ import {
   Repeat, 
   Repeat1, 
   Volume2, 
-  VolumeX, 
   Volume1, 
+  VolumeX, 
   Heart, 
-  Mic2, 
-  ListMusic, 
-  Laptop2, 
-  Maximize2
+  Maximize2,
+  Mic2,
+  ListMusic,
+  Laptop2
 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
 const formatTime = (seconds) => {
-  if (isNaN(seconds) || seconds < 0) return '0:00';
+  if (isNaN(seconds) || seconds === null) return '0:00';
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
@@ -58,10 +58,15 @@ export const PlayerBar = () => {
   const [hoverTime, setHoverTime] = useState(null);
   const progressBarRef = useRef(null);
 
+  const [isHoveringVolume, setIsHoveringVolume] = useState(false);
+  const volumeBarRef = useRef(null);
+
   if (!currentTrack) return null;
 
   const isLiked = likedTrackIds.includes(currentTrack.id);
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const effectiveVolume = isMuted ? 0 : volume;
+  const volumePercent = effectiveVolume * 100;
 
   const handleProgressClick = (e) => {
     if (!progressBarRef.current) return;
@@ -77,6 +82,27 @@ export const PlayerBar = () => {
     const clickX = e.clientX - rect.left;
     const ratio = Math.max(0, Math.min(1, clickX / rect.width));
     setHoverTime(ratio * duration);
+  };
+
+  const handleVolumeChangeFromEvent = (e) => {
+    if (!volumeBarRef.current) return;
+    const rect = volumeBarRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+    changeVolume(ratio);
+  };
+
+  const handleVolumeMouseDown = (e) => {
+    handleVolumeChangeFromEvent(e);
+    const onMouseMove = (moveEvent) => {
+      handleVolumeChangeFromEvent(moveEvent);
+    };
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
   };
 
   const renderVolumeIcon = () => {
@@ -246,8 +272,12 @@ export const PlayerBar = () => {
           <Laptop2 size={18} />
         </button>
 
-        {/* Volume Slider Group */}
-        <div className="volume-slider-group">
+        {/* Volume Slider Group - Custom Smooth Rail Component */}
+        <div 
+          className="volume-slider-group"
+          onMouseEnter={() => setIsHoveringVolume(true)}
+          onMouseLeave={() => setIsHoveringVolume(false)}
+        >
           <button 
             className="volume-icon-btn" 
             onClick={toggleMute}
@@ -255,16 +285,19 @@ export const PlayerBar = () => {
           >
             {renderVolumeIcon()}
           </button>
-          <input 
-            type="range" 
-            min="0" 
-            max="1" 
-            step="0.01"
-            value={isMuted ? 0 : volume}
-            onChange={(e) => changeVolume(parseFloat(e.target.value))}
-            className="volume-range-input"
-            title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
-          />
+          <div 
+            className="volume-bar-rail"
+            ref={volumeBarRef}
+            onMouseDown={handleVolumeMouseDown}
+            title={`Volume: ${Math.round(volumePercent)}%`}
+          >
+            <div 
+              className={`volume-bar-fill ${isHoveringVolume ? 'hover' : ''}`}
+              style={{ width: `${volumePercent}%` }}
+            >
+              <div className="volume-thumb-knob"></div>
+            </div>
+          </div>
         </div>
 
         {/* Expand Player Modal */}
@@ -279,4 +312,3 @@ export const PlayerBar = () => {
     </footer>
   );
 };
-

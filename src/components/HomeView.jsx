@@ -1,5 +1,5 @@
-﻿import React from 'react';
-import { Play, Pause, TrendingUp } from 'lucide-react';
+import React from 'react';
+import { Play, Pause } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
 export const HomeView = () => {
@@ -10,8 +10,7 @@ export const HomeView = () => {
     isPlaying, 
     playTrack, 
     togglePlayPause, 
-    navigateTo, setIsSpotifyInfoOpen,
-    liveListeners
+    navigateTo
   } = usePlayer();
 
   const [greeting] = React.useState(() => {
@@ -37,16 +36,6 @@ export const HomeView = () => {
     <div className="home-view-container">
       {/* Ambient Gradient Header */}
       <div className="home-hero-header">
-        <div className="home-top-meta">
-          <span className="live-realtime-badge">
-            <span className="live-pulsing-dot"></span>
-            REAL-TIME SPOTIFY STREAMING ENGINE
-          </span>
-          <span className="live-network-count">
-            <TrendingUp size={14} />
-            {liveListeners.toLocaleString()} concurrent listeners
-          </span>
-        </div>
         <h1 className="home-greeting-heading">{getGreeting()}</h1>
 
         {/* 6 Quick Play Cards Grid */}
@@ -176,25 +165,7 @@ export const HomeView = () => {
             ))}
           </div>
         </section>
-
-        {/* Deep Dive Banner */}
-        <div className="architecture-banner-card">
-          <div className="banner-content">
-            <span className="banner-tag">SPOTIFY INTERNAL ARCHITECTURE</span>
-            <h3 className="banner-title">Understand How Spotify Works Under the Hood</h3>
-            <p className="banner-description">
-              Explore how Spotify streams audio with Ogg Vorbis/AAC chunking, edge CDN caching, real-time Spotify Connect synchronization, and collaborative filtering recommendation engines.
-            </p>
-          </div>
-          <button 
-            className="banner-cta-btn"
-            onClick={() => setIsSpotifyInfoOpen(true)}
-          >
-            Explore Architecture
-          </button>
-        </div>
       </div>
     </div>
   );
 };
-

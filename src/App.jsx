@@ -13,7 +13,6 @@ import { QueueView } from './components/QueueView';
 import { FriendsActivityPanel } from './components/FriendsActivityPanel';
 import { ExpandedPlayerModal } from './components/ExpandedPlayerModal';
 import { DevicePickerModal } from './components/DevicePickerModal';
-import { SpotifyArchitectureModal } from './components/SpotifyArchitectureModal';
 import { AddFriendModal } from './components/AddFriendModal';
 import { Play, X } from 'lucide-react';
 import './App.css';
@@ -84,7 +83,6 @@ const MainLayout = () => {
       {/* Interactive Overlays & Modals */}
       <ExpandedPlayerModal />
       <DevicePickerModal />
-      <SpotifyArchitectureModal />
       <AddFriendModal />
     </div>
   );
