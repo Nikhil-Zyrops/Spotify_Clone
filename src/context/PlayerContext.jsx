@@ -24,6 +24,7 @@ export const PlayerProvider = ({ children }) => {
   const [likedTrackIds, setLikedTrackIds] = useState(() => {
     return getUserStorage('liked', ['track-1', 'track-3']);
   });
+  const likedTracks = tracks.filter(t => likedTrackIds.includes(t.id));
 
   // User-partitioned friends state
   const [friends, setFriends] = useState(() => {
@@ -94,7 +95,7 @@ export const PlayerProvider = ({ children }) => {
   const [historyIndex, setHistoryIndex] = useState(0);
   const [isExpandedPlayerOpen, setIsExpandedPlayerOpen] = useState(false);
   const [isDevicePickerOpen, setIsDevicePickerOpen] = useState(false);
-  const [isFriendsPanelOpen, setIsFriendsPanelOpen] = useState(true);
+  const [isFriendsPanelOpen, setIsFriendsPanelOpen] = useState(false);
   const [isSpotifyInfoOpen, setIsSpotifyInfoOpen] = useState(false);
 
   // Audio References & Web Audio DSP Nodes
@@ -183,7 +184,7 @@ export const PlayerProvider = ({ children }) => {
     });
 
     return () => { isMounted = false; };
-  }, [currentTrack, currentUser, likedTrackIds]);
+  }, [currentTrack, currentUser, likedTracks]);
 
   // Initial load: Fetch real-time global trending tracks
   useEffect(() => {
@@ -737,7 +738,6 @@ export const PlayerProvider = ({ children }) => {
     };
   }, [isPlaying, currentTrack, currentTime, currentUser]);
 
-  const likedTracks = tracks.filter(t => likedTrackIds.includes(t.id));
 
   return (
     <PlayerContext.Provider

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, Sparkles, Globe, MapPin } from 'lucide-react';
+import { Play, Pause } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
 export const HomeView = () => {
@@ -78,21 +78,15 @@ export const HomeView = () => {
 
       {/* Main Home Sections */}
       <div className="home-content-sections">
-        {/* 1. Regional Trending Section (Public IP Based) */}
+        {/* 1. Regional Trending Section */}
         <section className="home-section">
           <div className="section-header">
             <div>
-              <div className="section-title-with-pill">
-                <h2 className="section-title">
-                  {userRegion?.headline || `Trending in ${userRegion?.countryName || 'Your Region'}`}
-                </h2>
-                <span className="regional-flag-pill">
-                  <MapPin size={12} color="#1db954" />
-                  {userRegion?.flag || '??'} {userRegion?.countryName || 'Public IP Region'}
-                </span>
-              </div>
+              <h2 className="section-title">
+                {userRegion?.headline || `Trending in ${userRegion?.countryName || 'India'}`}
+              </h2>
               <p className="section-subtitle">
-                {userRegion?.subtitle || 'Latest hits streaming right now based on your location'}
+                {userRegion?.subtitle || 'Popular songs streaming in your location right now'}
               </p>
             </div>
             <button className="section-show-all-btn" onClick={() => navigateTo('playlist', 'playlist-top-hits')}>
@@ -101,7 +95,7 @@ export const HomeView = () => {
           </div>
 
           <div className="tracks-cards-row">
-            {displayRegional.map((track, index) => {
+            {displayRegional.map((track) => {
               const isThisPlaying = currentTrack?.id === track.id && isPlaying;
 
               return (
@@ -112,7 +106,6 @@ export const HomeView = () => {
                 >
                   <div className="card-artwork-wrapper">
                     <img src={track.coverUrl} alt={track.title} className="card-artwork-img" loading="lazy" />
-                    <span className="card-rank-badge">#{index + 1}</span>
                     
                     <button 
                       className={`card-play-fab ${isThisPlaying ? 'is-playing' : ''}`}
@@ -133,10 +126,6 @@ export const HomeView = () => {
                   <div className="card-info">
                     <div className="card-title" title={track.title}>{track.title}</div>
                     <div className="card-description">{track.artist}</div>
-                    <div className="card-meta-row">
-                      <span className="card-genre-pill">{track.genre || 'Regional'}</span>
-                      <span className="card-plays-text">{track.plays || '1.2M'} plays</span>
-                    </div>
                   </div>
                 </div>
               );
@@ -148,15 +137,9 @@ export const HomeView = () => {
         <section className="home-section">
           <div className="section-header">
             <div>
-              <div className="section-title-with-pill">
-                <h2 className="section-title">International Trending</h2>
-                <span className="international-pill">
-                  <Globe size={12} color="#38bdf8" />
-                  Global Chartbusters
-                </span>
-              </div>
+              <h2 className="section-title">International Hits</h2>
               <p className="section-subtitle">
-                Worldwide Top 50 megahits streaming across continents
+                The biggest chartbusters streaming worldwide
               </p>
             </div>
             <button className="section-show-all-btn" onClick={() => navigateTo('playlist', 'playlist-top-hits')}>
@@ -165,7 +148,7 @@ export const HomeView = () => {
           </div>
 
           <div className="tracks-cards-row">
-            {displayInternational.map((track, index) => {
+            {displayInternational.map((track) => {
               const isThisPlaying = currentTrack?.id === track.id && isPlaying;
 
               return (
@@ -176,7 +159,6 @@ export const HomeView = () => {
                 >
                   <div className="card-artwork-wrapper">
                     <img src={track.coverUrl} alt={track.title} className="card-artwork-img" loading="lazy" />
-                    <span className="card-rank-badge">#{index + 1}</span>
                     
                     <button 
                       className={`card-play-fab ${isThisPlaying ? 'is-playing' : ''}`}
@@ -197,10 +179,6 @@ export const HomeView = () => {
                   <div className="card-info">
                     <div className="card-title" title={track.title}>{track.title}</div>
                     <div className="card-description">{track.artist}</div>
-                    <div className="card-meta-row">
-                      <span className="card-genre-pill">{track.genre || 'Pop'}</span>
-                      <span className="card-plays-text">{track.plays || '3.5M'} plays</span>
-                    </div>
                   </div>
                 </div>
               );
@@ -208,19 +186,13 @@ export const HomeView = () => {
           </div>
         </section>
 
-        {/* 3. Dynamic "Made For You" Recommendation Engine */}
-        <section className="home-section made-for-you-section">
+        {/* 3. Clean "Made For You" Section */}
+        <section className="home-section">
           <div className="section-header">
             <div>
-              <div className="section-title-with-pill">
-                <h2 className="section-title">Made For You</h2>
-                <span className="personalized-pill">
-                  <Sparkles size={12} color="#1db954" />
-                  Live Taste Recommendation
-                </span>
-              </div>
+              <h2 className="section-title">Made For You</h2>
               <p className="section-subtitle">
-                Personalized tracks similar to what you listened to ? Dynamically updates to your taste
+                Recommendations inspired by your recent listening
               </p>
             </div>
           </div>
@@ -232,7 +204,7 @@ export const HomeView = () => {
               return (
                 <div 
                   key={track.id}
-                  className={`spotify-media-card recommendation-media-card ${currentTrack?.id === track.id ? 'is-active-media' : ''}`}
+                  className={`spotify-media-card ${currentTrack?.id === track.id ? 'is-active-media' : ''}`}
                   onClick={() => handleTrackClick(track, displayMadeForYou)}
                 >
                   <div className="card-artwork-wrapper">
@@ -256,12 +228,12 @@ export const HomeView = () => {
 
                   <div className="card-info">
                     <div className="card-title" title={track.title}>{track.title}</div>
-                    <div className="card-description">{track.artist}</div>
-                    
-                    {/* Dynamic Taste Similarity Badge */}
-                    <div className="card-recommendation-tag" title={track.recommendationReason || "Matches your recent listening"}>
-                      <Sparkles size={11} />
-                      <span>{track.recommendationReason || "Matches your taste"}</span>
+                    <div className="card-description">
+                      {track.recommendationReason ? (
+                        <span className="clean-rec-reason">{track.recommendationReason}</span>
+                      ) : (
+                        track.artist
+                      )}
                     </div>
                   </div>
                 </div>
@@ -270,12 +242,12 @@ export const HomeView = () => {
           </div>
         </section>
 
-        {/* 4. Curated Playlists & Mixes */}
+        {/* 4. Curated Playlists */}
         <section className="home-section">
           <div className="section-header">
             <div>
-              <h2 className="section-title">Your Playlists & Featured Mixes</h2>
-              <p className="section-subtitle">Curated collections and community playlists</p>
+              <h2 className="section-title">Your Playlists</h2>
+              <p className="section-subtitle">Curated collections for every mood</p>
             </div>
           </div>
 

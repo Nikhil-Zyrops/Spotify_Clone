@@ -5,8 +5,6 @@ import {
   Library, 
   Plus, 
   Heart, 
-  Mic2, 
-  ListMusic, 
 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
@@ -27,7 +25,7 @@ export const Sidebar = () => {
 
   return (
     <aside className="spotify-sidebar">
-      {/* Brand Header */}
+      {/* Brand Header & Primary Navigation */}
       <div className="sidebar-top-card">
         <div className="brand-logo" onClick={() => navigateTo('home')}>
           <div className="brand-icon-wrapper">
@@ -36,7 +34,6 @@ export const Sidebar = () => {
             </svg>
           </div>
           <span className="brand-name">Spotify</span>
-          <span className="brand-badge">Clone</span>
         </div>
 
         {/* Primary Navigation */}
@@ -55,22 +52,6 @@ export const Sidebar = () => {
           >
             <Search className="nav-icon" size={24} />
             <span>Search</span>
-          </button>
-
-          <button 
-            className={`nav-item ${currentView === 'lyrics' ? 'active' : ''}`}
-            onClick={() => navigateTo('lyrics')}
-          >
-            <Mic2 className="nav-icon" size={24} />
-            <span>Live Lyrics</span>
-          </button>
-
-          <button 
-            className={`nav-item ${currentView === 'queue' ? 'active' : ''}`}
-            onClick={() => navigateTo('queue')}
-          >
-            <ListMusic className="nav-icon" size={24} />
-            <span>Now Playing Queue</span>
           </button>
         </nav>
       </div>
