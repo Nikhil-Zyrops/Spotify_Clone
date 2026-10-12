@@ -273,9 +273,10 @@ export const PlayerProvider = ({ children }) => {
           compressor.attack.value = 0.003;
           compressor.release.value = 0.25;
 
-          const source = ctx.createMediaElementSource(audioRef.current);
+          // HTML5 audio plays directly to speakers without CORS hijacking
+          // const source = ctx.createMediaElementSource(audioRef.current);
           
-          source.connect(bassFilter);
+          // source.connect(bassFilter);
           bassFilter.connect(trebleFilter);
           trebleFilter.connect(compressor);
           compressor.connect(analyser);
@@ -362,7 +363,7 @@ export const PlayerProvider = ({ children }) => {
   // Audio Event Listeners & Per-User Progress Tracking
   useEffect(() => {
     const audio = audioRef.current;
-    audio.crossOrigin = "anonymous";
+    // audio.crossOrigin removed so browser plays cross-origin CDN audio without CORS restrictions
     audio.preload = "auto";
 
     const handleTimeUpdate = () => {
@@ -391,8 +392,13 @@ export const PlayerProvider = ({ children }) => {
       }
     };
 
-    const handleError = () => {
-      console.warn("Audio stream playback fallback triggered.");
+    const handleError = (e) => {
+      console.warn("Audio error encountered, attempting backup stream:", audio.error);
+      const backup = "https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Sevish_-__nbsp_.mp3";
+      if (audio.src !== backup) {
+        audio.src = backup;
+        audio.play().catch(() => {});
+      }
     };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
@@ -434,17 +440,7 @@ export const PlayerProvider = ({ children }) => {
       setupWebAudio();
       const playPromise = audio.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          synthIntervalRef.current = setInterval(() => {
-            setCurrentTime(prev => {
-              if (prev >= (currentTrack.duration || 180)) {
-                if (playNextRef.current) playNextRef.current();
-                return 0;
-              }
-              return prev + 1;
-            });
-          }, 1000);
-        });
+        playPromise.catch(err => { console.warn("Audio stream playback notice:", err); });
       }
     }
   }, [currentTrack, isPlaying, setupWebAudio]);
