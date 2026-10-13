@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { INITIAL_TRACKS, INITIAL_PLAYLISTS, INITIAL_FRIENDS_ACTIVITY, AVAILABLE_DEVICES } from '../data/mockData';
 import { searchLiveSongs, fetchTrendingTracks, detectUserRegion, fetchRegionalTrending, fetchInternationalTrending, fetchMadeForYouRecommendations, REGION_METADATA } from '../services/musicService';
 import { useAuth } from './AuthContext';
@@ -14,6 +14,7 @@ export const PlayerProvider = ({ children }) => {
     getUserPlaybackProgress 
   } = useAuth();
 
+
   // Library State - Namespaced per user
   const [tracks, setTracks] = useState(INITIAL_TRACKS);
   
@@ -24,7 +25,9 @@ export const PlayerProvider = ({ children }) => {
   const [likedTrackIds, setLikedTrackIds] = useState(() => {
     return getUserStorage('liked', ['track-1', 'track-3']);
   });
-  const likedTracks = tracks.filter(t => likedTrackIds.includes(t.id));
+  const likedTracks = useMemo(() => {
+    return tracks.filter(t => likedTrackIds.includes(t.id));
+  }, [tracks, likedTrackIds]);
 
   // User-partitioned friends state
   const [friends, setFriends] = useState(() => {
@@ -138,9 +141,6 @@ export const PlayerProvider = ({ children }) => {
     setUserStorage('liked', likedTrackIds);
   }, [likedTrackIds, setUserStorage]);
 
-  useEffect(() => {
-    setUserStorage('friends', friends);
-  }, [friends, setUserStorage]);
 
 
   // Initial Region & International Trending Loader
@@ -179,12 +179,16 @@ export const PlayerProvider = ({ children }) => {
 
     fetchMadeForYouRecommendations(historyList, likedTracks, currentTrack).then(recs => {
       if (isMounted && recs && recs.length > 0) {
-        setMadeForYouTracks(recs);
+        setMadeForYouTracks(prev => {
+          const prevIds = prev.map(p => p.id).join(',');
+          const newIds = recs.map(p => p.id).join(',');
+          return prevIds === newIds ? prev : recs;
+        });
       }
     });
 
     return () => { isMounted = false; };
-  }, [currentTrack, currentUser, likedTracks]);
+  }, [currentTrack?.id, currentUser?.id, likedTrackIds]);
 
   // Initial load: Fetch real-time global trending tracks
   useEffect(() => {
@@ -284,7 +288,6 @@ export const PlayerProvider = ({ children }) => {
 
           audioContextRef.current = ctx;
           analyserRef.current = analyser;
-          sourceNodeRef.current = source;
           bassFilterRef.current = bassFilter;
           trebleFilterRef.current = trebleFilter;
           compressorRef.current = compressor;
@@ -433,17 +436,19 @@ export const PlayerProvider = ({ children }) => {
 
     if (audio.src !== currentTrack.audioUrl) {
       audio.src = currentTrack.audioUrl;
+      setDuration(currentTrack.duration || 180);
     }
-    setDuration(currentTrack.duration || 180);
 
     if (isPlaying) {
       setupWebAudio();
       const playPromise = audio.play();
       if (playPromise !== undefined) {
-        playPromise.catch(err => { console.warn("Audio stream playback notice:", err); });
+        playPromise.catch(() => {});
       }
+    } else {
+      audio.pause();
     }
-  }, [currentTrack, isPlaying, setupWebAudio]);
+  }, [currentTrack?.id, currentTrack?.audioUrl, isPlaying, setupWebAudio]);
 
   // Navigation Helpers
   const navigateTo = (view, param = null) => {
@@ -498,11 +503,6 @@ export const PlayerProvider = ({ children }) => {
 
     setCurrentTrack(track);
     setIsPlaying(true);
-
-    const audio = audioRef.current;
-    audio.src = track.audioUrl;
-    audio.play().catch(() => {});
-
     saveUserPlaybackProgress(track, 0, track.duration || 180);
   };
 
@@ -652,7 +652,11 @@ export const PlayerProvider = ({ children }) => {
       progressPercent: Math.floor(Math.random() * 40) + 10,
       audioUrl: friendData.audioUrl || ''
     };
-    setFriends(prev => [newFriend, ...prev]);
+    setFriends(prev => {
+      const next = [newFriend, ...prev];
+      setUserStorage('friends', next);
+      return next;
+    });
     setIsAddFriendOpen(false);
 
     try {
@@ -667,12 +671,16 @@ export const PlayerProvider = ({ children }) => {
     } catch {
       // fallback
     }
-  }, []);
+  }, [setUserStorage]);
 
   // Remove Friend helper
   const removeFriend = useCallback((friendId) => {
-    setFriends(prev => prev.filter(f => f.id !== friendId));
-  }, []);
+    setFriends(prev => {
+      const next = prev.filter(f => f.id !== friendId);
+      setUserStorage('friends', next);
+      return next;
+    });
+  }, [setUserStorage]);
 
   // Real-Time Peer Audio Feed via BroadcastChannel (multi-user and multi-tab)
   useEffect(() => {
@@ -680,19 +688,22 @@ export const PlayerProvider = ({ children }) => {
     const channel = new BroadcastChannel('spotify_clone_peer_network');
 
     if (isPlaying && currentTrack) {
-      channel.postMessage({
-        type: 'PEER_PLAYBACK',
-        peerId: currentUser ? currentUser.id : 'anon',
-        peerName: currentUser ? currentUser.name : 'Friend (Live Tab)',
-        peerAvatar: currentUser ? currentUser.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80',
-        track: currentTrack.title,
-        artist: currentTrack.artist,
-        album: currentTrack.album || currentTrack.title,
-        coverUrl: currentTrack.coverUrl,
-        audioUrl: currentTrack.audioUrl,
-        duration: currentTrack.duration,
-        currentTime: currentTime
-      });
+      try {
+        channel.postMessage({
+          type: 'PEER_PLAYBACK',
+          peerId: currentUser ? currentUser.id : 'anon',
+          peerName: currentUser ? currentUser.name : 'Friend (Live Tab)',
+          peerAvatar: currentUser ? currentUser.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80',
+          track: currentTrack.title,
+          artist: currentTrack.artist,
+          album: currentTrack.album || currentTrack.title,
+          coverUrl: currentTrack.coverUrl,
+          audioUrl: currentTrack.audioUrl,
+          duration: currentTrack.duration
+        });
+      } catch {
+        // channel error
+      }
     }
 
     const handleMessage = (event) => {
@@ -700,6 +711,7 @@ export const PlayerProvider = ({ children }) => {
       if (data && data.type === 'PEER_PLAYBACK') {
         // Do not mirror current user as their own friend
         if (currentUser && data.peerId === currentUser.id) return;
+        if (!data.track || !data.peerId) return;
 
         setFriends(prev => {
           const peerId = data.peerId || 'peer-tab';
@@ -713,11 +725,13 @@ export const PlayerProvider = ({ children }) => {
             album: data.album,
             timeAgo: 'Listening now',
             isLive: true,
-            progressPercent: data.duration ? Math.min(100, Math.round((data.currentTime / data.duration) * 100)) : 35,
+            progressPercent: data.duration ? 35 : 25,
             audioUrl: data.audioUrl,
             coverUrl: data.coverUrl
           };
           if (peerIndex !== -1) {
+            const existing = prev[peerIndex];
+            if (existing.track === peerFriend.track) return prev;
             const nextList = [...prev];
             nextList[peerIndex] = peerFriend;
             return nextList;
@@ -732,7 +746,7 @@ export const PlayerProvider = ({ children }) => {
       channel.removeEventListener('message', handleMessage);
       channel.close();
     };
-  }, [isPlaying, currentTrack, currentTime, currentUser]);
+  }, [isPlaying, currentTrack?.id, currentUser?.id]);
 
 
   return (
